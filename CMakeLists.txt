@@ -15,10 +15,18 @@ add_library(core src/core/graph.cpp)
 add_library(generator src/generator/graph_generator.cpp)
 target_link_libraries(generator core)
 
+# Algorithms library
+add_library(algorithms src/algorithms/dijkstra.cpp)
+target_link_libraries(algorithms core)
+
 # Main executable
 add_executable(planner src/main.cpp)
-target_link_libraries(planner core generator)
+target_link_libraries(planner core generator algorithms)
 
 # Tests executable
 add_executable(test_graph tests/test_graph.cpp)
 target_link_libraries(test_graph core generator)
+
+# Dijkstra Tests
+add_executable(test_dijkstra tests/test_dijkstra.cpp)
+target_link_libraries(test_dijkstra core generator algorithms)
