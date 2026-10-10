@@ -4,6 +4,7 @@
 #include "core/graph.hpp"
 #include "algorithms/dijkstra.hpp"
 #include "algorithms/astar.hpp"
+#include "algorithms/ida_star.hpp"
 #include "heuristics/euclidean_heuristic.hpp"
 #include "heuristics/alt_heuristic.hpp"
 
@@ -25,8 +26,11 @@ void print_result(const std::string& name, const PathResult& res, NodeID start_n
         std::cout << "Path found!\n"
                   << "  Cost: " << res.total_cost << "\n"
                   << "  Nodes Generated: " << res.nodes_generated << "\n"
-                  << "  Nodes Expanded: " << res.nodes_expanded << "\n"
-                  << "  Total Time (ms): " << res.search_time_ms << "\n"
+                  << "  Nodes Expanded: " << res.nodes_expanded << "\n";
+        if (res.iterations > 0) {
+            std::cout << "  Iterations (IDA*): " << res.iterations << "\n";
+        }
+        std::cout << "  Total Time (ms): " << res.search_time_ms << "\n"
                   << "  Heuristic Time (ms): " << res.heuristic_time_ms << "\n"
                   << "  Path Length: " << res.path.size() << " nodes\n";
     }
@@ -86,7 +90,11 @@ int main(int argc, char** argv) {
             auto heuristic_alt = std::make_shared<ALTHeuristic>(g, landmarks);
             AStar astar_alt(heuristic_alt);
             PathResult a_res_alt = astar_alt.solve(g, start_node, goal_node);
-            print_result("A* (ALT - 4 Landmarks)", a_res_alt, start_node, goal_node);
+            print_result("A* (ALT - 4 LMs)", a_res_alt, start_node, goal_node);
+
+            IDAStar ida_alt(heuristic_alt);
+            PathResult ida_res_alt = ida_alt.solve(g, start_node, goal_node);
+            print_result("IDA* (ALT - 4 LMs)", ida_res_alt, start_node, goal_node);
         }
     }
     

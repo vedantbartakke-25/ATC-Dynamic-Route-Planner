@@ -19,6 +19,7 @@ target_link_libraries(generator core)
 add_library(algorithms 
     src/algorithms/dijkstra.cpp
     src/algorithms/astar.cpp
+    src/algorithms/ida_star.cpp
     src/heuristics/alt_heuristic.cpp
 )
 target_link_libraries(algorithms core)
@@ -42,3 +43,7 @@ target_link_libraries(test_astar core generator algorithms)
 # ALT Tests
 add_executable(test_alt tests/test_alt.cpp)
 target_link_libraries(test_alt core generator algorithms)
+
+# IDA* Tests
+add_executable(test_ida_star tests/test_ida_star.cpp)
+target_link_libraries(test_ida_star core generator algorithms)
