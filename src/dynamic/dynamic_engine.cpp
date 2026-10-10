@@ -93,6 +93,7 @@ ReplanningResult DynamicEngine::handle_event(const GraphEvent& event, const Path
 
     if (needs_replan) {
         res.replanned = true;
+        solver->refresh(graph);
         res.new_result = solver->solve(graph, start, goal);
     }
 

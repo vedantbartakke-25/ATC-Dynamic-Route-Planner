@@ -8,12 +8,17 @@
 using namespace std::chrono;
 
 ALTHeuristic::ALTHeuristic(const Graph& graph, const std::vector<NodeID>& chosen_landmarks) 
-    : landmarks(chosen_landmarks), preprocessing_time_ms(0.0) {
+    : landmarks(chosen_landmarks), preprocessing_time_ms(0.0), 
+      cached_graph_id(graph.get_id()), cached_graph_version(graph.get_version()) {
     
+    preprocess(graph);
+}
+
+void ALTHeuristic::preprocess(const Graph& graph) {
     auto start_time = steady_clock::now();
 
     size_t num_nodes = graph.get_num_nodes();
-    dist_table.resize(landmarks.size(), std::vector<EdgeWeight>(num_nodes, INF_WEIGHT));
+    dist_table.assign(landmarks.size(), std::vector<EdgeWeight>(num_nodes, INF_WEIGHT));
 
     for (size_t i = 0; i < landmarks.size(); ++i) {
         compute_landmark_distances(graph, landmarks[i], dist_table[i]);
@@ -21,6 +26,18 @@ ALTHeuristic::ALTHeuristic(const Graph& graph, const std::vector<NodeID>& chosen
 
     auto end_time = steady_clock::now();
     preprocessing_time_ms = duration<double, std::milli>(end_time - start_time).count();
+    
+    // Only update cache after successful preprocess
+    cached_graph_id = graph.get_id();
+    cached_graph_version = graph.get_version();
+}
+
+void ALTHeuristic::refresh(const Graph& graph) {
+    if (graph.get_id() != cached_graph_id || graph.get_version() != cached_graph_version) {
+        preprocess(graph);
+    } else {
+        preprocessing_time_ms = 0.0; // No new preprocessing done for this query
+    }
 }
 
 struct ALTSearchNode {

@@ -104,29 +104,58 @@ int main(int argc, char** argv) {
             if (!events_file.empty()) {
                 std::cout << "\n=== Dynamic Replanning Engine ===\n";
                 auto events = DynamicEngine::load_events(events_file);
+                
                 auto d_solver = std::make_shared<Dijkstra>();
-                DynamicEngine engine(g, d_solver);
-                
-                PathResult current_res = d_solver->solve(g, start_node, goal_node);
-                
-                for (const auto& ev : events) {
-                    std::string type_str;
-                    if (ev.type == EventType::UPDATE_WEIGHT) type_str = "UPDATE_WEIGHT";
-                    else if (ev.type == EventType::CLOSE_EDGE) type_str = "CLOSE_EDGE";
-                    else if (ev.type == EventType::OPEN_EDGE) type_str = "OPEN_EDGE";
+                auto astar_e_solver = std::make_shared<AStar>(heuristic_e);
+                auto astar_alt_solver = std::make_shared<AStar>(heuristic_alt);
+                auto ida_alt_solver = std::make_shared<IDAStar>(heuristic_alt);
 
-                    std::cout << "Time " << ev.time << " | " << type_str << " on edge (" << ev.u << "," << ev.v << ") ";
-                    if (ev.type == EventType::UPDATE_WEIGHT) std::cout << "to " << ev.new_weight;
-                    std::cout << "\n";
-
-                    ReplanningResult rep = engine.handle_event(ev, current_res, start_node, goal_node);
+                std::vector<std::pair<std::string, std::shared_ptr<Solver>>> solvers = {
+                    {"Dijkstra", d_solver},
+                    {"A* (Euclidean)", astar_e_solver},
+                    {"A* (ALT - 4 LMs)", astar_alt_solver},
+                    {"IDA* (ALT - 4 LMs)", ida_alt_solver}
+                };
+                
+                for (auto& p : solvers) {
+                    std::string name = p.first;
+                    std::cout << "\n--- Engine using " << name << " ---\n";
+                    // Reset graph by reloading it
+                    Graph dyn_g;
+                    dyn_g.load_from_file(graph_file);
                     
-                    if (rep.replanned) {
-                        std::cout << "  => Replanned! Old Cost: " << rep.old_cost << ", New Cost: " << rep.new_result.total_cost << "\n";
-                        std::cout << "  => Replan Time: " << rep.new_result.search_time_ms << "ms, Nodes Expanded: " << rep.new_result.nodes_expanded << "\n";
-                        current_res = rep.new_result;
-                    } else {
-                        std::cout << "  => Optimal route unaffected. No replanning needed.\n";
+                    // We need new heuristics bound to the new graph for ALT
+                    auto dyn_h_alt = std::make_shared<ALTHeuristic>(dyn_g, ALTHeuristic::select_landmarks(dyn_g, 4));
+                    auto dyn_h_e = std::make_shared<EuclideanHeuristic>();
+                    
+                    std::shared_ptr<Solver> active_solver;
+                    if (name == "Dijkstra") active_solver = std::make_shared<Dijkstra>();
+                    else if (name == "A* (Euclidean)") active_solver = std::make_shared<AStar>(dyn_h_e);
+                    else if (name == "A* (ALT - 4 LMs)") active_solver = std::make_shared<AStar>(dyn_h_alt);
+                    else if (name == "IDA* (ALT - 4 LMs)") active_solver = std::make_shared<IDAStar>(dyn_h_alt);
+
+                    DynamicEngine engine(dyn_g, active_solver);
+                    PathResult current_res = active_solver->solve(dyn_g, start_node, goal_node);
+                    
+                    for (const auto& ev : events) {
+                        std::string type_str;
+                        if (ev.type == EventType::UPDATE_WEIGHT) type_str = "UPDATE_WEIGHT";
+                        else if (ev.type == EventType::CLOSE_EDGE) type_str = "CLOSE_EDGE";
+                        else if (ev.type == EventType::OPEN_EDGE) type_str = "OPEN_EDGE";
+
+                        std::cout << "Time " << ev.time << " | " << type_str << " on (" << ev.u << "," << ev.v << ") ";
+                        if (ev.type == EventType::UPDATE_WEIGHT) std::cout << "to " << ev.new_weight;
+                        std::cout << "\n";
+
+                        ReplanningResult rep = engine.handle_event(ev, current_res, start_node, goal_node);
+                        
+                        if (rep.replanned) {
+                            std::cout << "  => Replanned! Old Cost: " << rep.old_cost << ", New Cost: " << rep.new_result.total_cost << "\n";
+                            std::cout << "  => Replan Time: " << rep.new_result.search_time_ms << "ms, Preprocess Time: " << rep.new_result.preprocessing_time_ms << "ms, Nodes Expanded: " << rep.new_result.nodes_expanded << "\n";
+                            current_res = rep.new_result;
+                        } else {
+                            std::cout << "  => Optimal route unaffected. No replanning needed.\n";
+                        }
                     }
                 }
             }

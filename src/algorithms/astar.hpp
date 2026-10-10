@@ -12,6 +12,10 @@ private:
 public:
     AStar(std::shared_ptr<Heuristic> h) : heuristic(h) {}
 
+    void refresh(const Graph& graph) override {
+        if (heuristic) heuristic->refresh(graph);
+    }
+
     PathResult solve(const Graph& graph, NodeID start, NodeID goal) override;
 };
 

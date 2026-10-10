@@ -11,6 +11,9 @@ public:
     // Computes the heuristic value from 'u' to 'goal'
     virtual EdgeWeight compute(NodeID u, NodeID goal, const Graph& graph) = 0;
     
+    // Refresh preprocessing caches if needed
+    virtual void refresh(const Graph& graph) {}
+
     // Returns preprocessing time in milliseconds (0.0 by default)
     virtual double get_preprocessing_time_ms() const { return 0.0; }
 };

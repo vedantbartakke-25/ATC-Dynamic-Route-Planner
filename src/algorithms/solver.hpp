@@ -8,6 +8,9 @@ class Solver {
 public:
     virtual ~Solver() = default;
     
+    // Refresh precomputed state if graph changed
+    virtual void refresh(const Graph& graph) {}
+    
     // Solves the shortest path from start to goal
     virtual PathResult solve(const Graph& graph, NodeID start, NodeID goal) = 0;
 };

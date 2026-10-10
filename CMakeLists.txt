@@ -57,3 +57,7 @@ target_link_libraries(test_ida_star core generator algorithms)
 # Dynamic Tests
 add_executable(test_dynamic tests/test_dynamic.cpp)
 target_link_libraries(test_dynamic core generator algorithms dynamic)
+
+# Phase 6 Patch Tests
+add_executable(test_phase6_patch tests/test_phase6_patch.cpp)
+target_link_libraries(test_phase6_patch core generator algorithms dynamic)

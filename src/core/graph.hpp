@@ -21,11 +21,21 @@ struct Edge {
 
 class Graph {
 private:
+    uint64_t id;
+    uint64_t version;
     std::vector<Node> nodes;
     std::vector<std::vector<Edge>> adj_list;
 
+    static uint64_t get_next_id() {
+        static uint64_t next_id = 0;
+        return ++next_id;
+    }
+
 public:
-    Graph() = default;
+    Graph() : id(get_next_id()), version(0) {}
+
+    uint64_t get_id() const { return id; }
+    uint64_t get_version() const { return version; }
 
     NodeID add_node(double x, double y);
     void add_edge(NodeID u, NodeID v, EdgeWeight weight);

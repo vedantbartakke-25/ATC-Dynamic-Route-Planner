@@ -5,6 +5,7 @@
 #include <algorithm>
 
 NodeID Graph::add_node(double x, double y) {
+    version++;
     NodeID id = static_cast<NodeID>(nodes.size());
     nodes.push_back({x, y});
     adj_list.emplace_back();
@@ -15,6 +16,10 @@ void Graph::add_edge(NodeID u, NodeID v, EdgeWeight weight) {
     if (u >= nodes.size() || v >= nodes.size()) {
         throw std::out_of_range("Node ID out of range");
     }
+    EdgeWeight min_bound = euclidean_distance(u, v);
+    if (weight < min_bound) weight = min_bound;
+    
+    version++;
     adj_list[u].emplace_back(u, v, weight);
 }
 
@@ -29,6 +34,7 @@ bool Graph::remove_edge(NodeID u, NodeID v) {
     auto it = std::remove_if(edges.begin(), edges.end(), [v](const Edge& e) { return e.target == v; });
     if (it != edges.end()) {
         edges.erase(it, edges.end());
+        version++;
         return true;
     }
     return false;
@@ -39,7 +45,10 @@ bool Graph::set_edge_status(NodeID u, NodeID v, bool is_open) {
     for (auto& edge : adj_list[u]) {
         if (edge.target == v) {
             bool old = edge.is_open;
-            edge.is_open = is_open;
+            if (old != is_open) {
+                edge.is_open = is_open;
+                version++;
+            }
             return old;
         }
     }
@@ -47,11 +56,21 @@ bool Graph::set_edge_status(NodeID u, NodeID v, bool is_open) {
 }
 
 EdgeWeight Graph::update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight) {
-    if (u >= nodes.size()) throw std::out_of_range("Node ID out of range");
+    if (u >= nodes.size() || v >= nodes.size()) throw std::out_of_range("Node ID out of range");
+    
+    // Ensure weight does not drop below physical Euclidean distance to preserve heuristic admissibility
+    EdgeWeight min_bound = euclidean_distance(u, v);
+    if (new_weight < min_bound) {
+        new_weight = min_bound;
+    }
+
     for (auto& edge : adj_list[u]) {
         if (edge.target == v) {
             EdgeWeight old = edge.weight;
-            edge.weight = new_weight;
+            if (old != new_weight) {
+                edge.weight = new_weight;
+                version++;
+            }
             return old;
         }
     }
@@ -62,8 +81,10 @@ bool Graph::load_from_file(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) return false;
 
+    version++; // File loading is a structural change
     nodes.clear();
     adj_list.clear();
+
 
     std::string line;
     while (std::getline(file, line)) {
