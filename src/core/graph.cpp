@@ -34,23 +34,25 @@ bool Graph::remove_edge(NodeID u, NodeID v) {
     return false;
 }
 
-void Graph::set_edge_status(NodeID u, NodeID v, bool is_open) {
+bool Graph::set_edge_status(NodeID u, NodeID v, bool is_open) {
     if (u >= nodes.size()) throw std::out_of_range("Node ID out of range");
     for (auto& edge : adj_list[u]) {
         if (edge.target == v) {
+            bool old = edge.is_open;
             edge.is_open = is_open;
-            return;
+            return old;
         }
     }
     throw std::invalid_argument("Edge not found");
 }
 
-void Graph::update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight) {
+EdgeWeight Graph::update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight) {
     if (u >= nodes.size()) throw std::out_of_range("Node ID out of range");
     for (auto& edge : adj_list[u]) {
         if (edge.target == v) {
+            EdgeWeight old = edge.weight;
             edge.weight = new_weight;
-            return;
+            return old;
         }
     }
     throw std::invalid_argument("Edge not found");

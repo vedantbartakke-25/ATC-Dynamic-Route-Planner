@@ -7,6 +7,7 @@
 #include "algorithms/ida_star.hpp"
 #include "heuristics/euclidean_heuristic.hpp"
 #include "heuristics/alt_heuristic.hpp"
+#include "dynamic/dynamic_engine.hpp"
 
 void print_help() {
     std::cout << "Dynamic Shortest Path Replanning\n"
@@ -14,6 +15,7 @@ void print_help() {
               << "Options:\n"
               << "  --help          Show this help message\n"
               << "  --graph <file>  Specify the graph input file\n"
+              << "  --events <file> Specify dynamic events file\n"
               << "  --start <id>    Start node ID\n"
               << "  --goal <id>     Goal node ID\n";
 }
@@ -43,6 +45,7 @@ int main(int argc, char** argv) {
     }
 
     std::string graph_file = "";
+    std::string events_file = "";
     NodeID start_node = INVALID_NODE;
     NodeID goal_node = INVALID_NODE;
 
@@ -53,6 +56,8 @@ int main(int argc, char** argv) {
             return 0;
         } else if (arg == "--graph" && i + 1 < argc) {
             graph_file = argv[++i];
+        } else if (arg == "--events" && i + 1 < argc) {
+            events_file = argv[++i];
         } else if (arg == "--start" && i + 1 < argc) {
             start_node = std::stoul(argv[++i]);
         } else if (arg == "--goal" && i + 1 < argc) {
@@ -95,6 +100,36 @@ int main(int argc, char** argv) {
             IDAStar ida_alt(heuristic_alt);
             PathResult ida_res_alt = ida_alt.solve(g, start_node, goal_node);
             print_result("IDA* (ALT - 4 LMs)", ida_res_alt, start_node, goal_node);
+
+            if (!events_file.empty()) {
+                std::cout << "\n=== Dynamic Replanning Engine ===\n";
+                auto events = DynamicEngine::load_events(events_file);
+                auto d_solver = std::make_shared<Dijkstra>();
+                DynamicEngine engine(g, d_solver);
+                
+                PathResult current_res = d_solver->solve(g, start_node, goal_node);
+                
+                for (const auto& ev : events) {
+                    std::string type_str;
+                    if (ev.type == EventType::UPDATE_WEIGHT) type_str = "UPDATE_WEIGHT";
+                    else if (ev.type == EventType::CLOSE_EDGE) type_str = "CLOSE_EDGE";
+                    else if (ev.type == EventType::OPEN_EDGE) type_str = "OPEN_EDGE";
+
+                    std::cout << "Time " << ev.time << " | " << type_str << " on edge (" << ev.u << "," << ev.v << ") ";
+                    if (ev.type == EventType::UPDATE_WEIGHT) std::cout << "to " << ev.new_weight;
+                    std::cout << "\n";
+
+                    ReplanningResult rep = engine.handle_event(ev, current_res, start_node, goal_node);
+                    
+                    if (rep.replanned) {
+                        std::cout << "  => Replanned! Old Cost: " << rep.old_cost << ", New Cost: " << rep.new_result.total_cost << "\n";
+                        std::cout << "  => Replan Time: " << rep.new_result.search_time_ms << "ms, Nodes Expanded: " << rep.new_result.nodes_expanded << "\n";
+                        current_res = rep.new_result;
+                    } else {
+                        std::cout << "  => Optimal route unaffected. No replanning needed.\n";
+                    }
+                }
+            }
         }
     }
     

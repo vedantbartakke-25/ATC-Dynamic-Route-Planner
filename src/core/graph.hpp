@@ -32,8 +32,8 @@ public:
     void add_undirected_edge(NodeID u, NodeID v, EdgeWeight weight);
     bool remove_edge(NodeID u, NodeID v);
     
-    void set_edge_status(NodeID u, NodeID v, bool is_open);
-    void update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight);
+    bool set_edge_status(NodeID u, NodeID v, bool is_open);
+    EdgeWeight update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight);
 
     size_t get_num_nodes() const { return nodes.size(); }
     const Node& get_node(NodeID u) const { return nodes[u]; }

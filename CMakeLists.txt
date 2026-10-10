@@ -24,9 +24,15 @@ add_library(algorithms
 )
 target_link_libraries(algorithms core)
 
+# Dynamic Engine library
+add_library(dynamic 
+    src/dynamic/dynamic_engine.cpp
+)
+target_link_libraries(dynamic core algorithms)
+
 # Main executable
 add_executable(planner src/main.cpp)
-target_link_libraries(planner core generator algorithms)
+target_link_libraries(planner core generator algorithms dynamic)
 
 # Tests executable
 add_executable(test_graph tests/test_graph.cpp)
@@ -47,3 +53,7 @@ target_link_libraries(test_alt core generator algorithms)
 # IDA* Tests
 add_executable(test_ida_star tests/test_ida_star.cpp)
 target_link_libraries(test_ida_star core generator algorithms)
+
+# Dynamic Tests
+add_executable(test_dynamic tests/test_dynamic.cpp)
+target_link_libraries(test_dynamic core generator algorithms dynamic)
