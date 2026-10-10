@@ -1,7 +1,10 @@
 #include <iostream>
 #include <string>
+#include <memory>
 #include "core/graph.hpp"
 #include "algorithms/dijkstra.hpp"
+#include "algorithms/astar.hpp"
+#include "heuristics/euclidean_heuristic.hpp"
 
 void print_help() {
     std::cout << "Dynamic Shortest Path Replanning\n"
@@ -11,6 +14,21 @@ void print_help() {
               << "  --graph <file>  Specify the graph input file\n"
               << "  --start <id>    Start node ID\n"
               << "  --goal <id>     Goal node ID\n";
+}
+
+void print_result(const std::string& name, const PathResult& res, NodeID start_node, NodeID goal_node) {
+    std::cout << "\n--- " << name << " ---\n";
+    if (res.path.empty() && start_node != goal_node) {
+        std::cout << "No path found.\n";
+    } else {
+        std::cout << "Path found!\n"
+                  << "  Cost: " << res.total_cost << "\n"
+                  << "  Nodes Generated: " << res.nodes_generated << "\n"
+                  << "  Nodes Expanded: " << res.nodes_expanded << "\n"
+                  << "  Total Time (ms): " << res.search_time_ms << "\n"
+                  << "  Heuristic Time (ms): " << res.heuristic_time_ms << "\n"
+                  << "  Path Length: " << res.path.size() << " nodes\n";
+    }
 }
 
 int main(int argc, char** argv) {
@@ -51,23 +69,16 @@ int main(int argc, char** argv) {
         g.print_info();
         
         if (start_node != INVALID_NODE && goal_node != INVALID_NODE) {
-            Dijkstra solver;
-            std::cout << "\nRunning Dijkstra from " << start_node << " to " << goal_node << "...\n";
-            PathResult res = solver.solve(g, start_node, goal_node);
+            std::cout << "\nSolving from " << start_node << " to " << goal_node << "...\n";
             
-            if (res.path.empty() && start_node != goal_node) {
-                std::cout << "No path found.\n";
-            } else {
-                std::cout << "Path found!\n"
-                          << "  Cost: " << res.total_cost << "\n"
-                          << "  Nodes Generated: " << res.nodes_generated << "\n"
-                          << "  Nodes Expanded: " << res.nodes_expanded << "\n"
-                          << "  Time (ms): " << res.search_time_ms << "\n"
-                          << "  Path Length: " << res.path.size() << " nodes\n";
-                std::cout << "  Path: ";
-                for (NodeID n : res.path) std::cout << n << " ";
-                std::cout << "\n";
-            }
+            Dijkstra dijkstra;
+            PathResult d_res = dijkstra.solve(g, start_node, goal_node);
+            print_result("Dijkstra", d_res, start_node, goal_node);
+            
+            auto heuristic = std::make_shared<EuclideanHeuristic>();
+            AStar astar(heuristic);
+            PathResult a_res = astar.solve(g, start_node, goal_node);
+            print_result("A* (Euclidean)", a_res, start_node, goal_node);
         }
     }
     

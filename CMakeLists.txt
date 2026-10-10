@@ -16,7 +16,10 @@ add_library(generator src/generator/graph_generator.cpp)
 target_link_libraries(generator core)
 
 # Algorithms library
-add_library(algorithms src/algorithms/dijkstra.cpp)
+add_library(algorithms 
+    src/algorithms/dijkstra.cpp
+    src/algorithms/astar.cpp
+)
 target_link_libraries(algorithms core)
 
 # Main executable
@@ -30,3 +33,7 @@ target_link_libraries(test_graph core generator)
 # Dijkstra Tests
 add_executable(test_dijkstra tests/test_dijkstra.cpp)
 target_link_libraries(test_dijkstra core generator algorithms)
+
+# A* Tests
+add_executable(test_astar tests/test_astar.cpp)
+target_link_libraries(test_astar core generator algorithms)

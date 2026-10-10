@@ -10,9 +10,12 @@ struct PathResult {
     size_t nodes_expanded;
     size_t nodes_generated;
     double search_time_ms;
+    double heuristic_time_ms;
+    double preprocessing_time_ms;
     
     PathResult() 
-        : total_cost(INF_WEIGHT), nodes_expanded(0), nodes_generated(0), search_time_ms(0.0) {}
+        : total_cost(INF_WEIGHT), nodes_expanded(0), nodes_generated(0), 
+          search_time_ms(0.0), heuristic_time_ms(0.0), preprocessing_time_ms(0.0) {}
 };
 
 #endif // PATH_RESULT_HPP
