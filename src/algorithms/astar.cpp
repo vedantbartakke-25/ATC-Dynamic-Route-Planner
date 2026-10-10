@@ -80,6 +80,7 @@ PathResult AStar::solve(const Graph& graph, NodeID start, NodeID goal) {
     auto end_time = steady_clock::now();
     result.search_time_ms = duration<double, std::milli>(end_time - start_time).count();
     result.heuristic_time_ms = heuristic_duration_ms;
+    result.preprocessing_time_ms = heuristic->get_preprocessing_time_ms();
 
     if (g_dist[goal] != INF_WEIGHT) {
         result.total_cost = g_dist[goal];

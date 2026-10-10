@@ -5,6 +5,7 @@
 #include "algorithms/dijkstra.hpp"
 #include "algorithms/astar.hpp"
 #include "heuristics/euclidean_heuristic.hpp"
+#include "heuristics/alt_heuristic.hpp"
 
 void print_help() {
     std::cout << "Dynamic Shortest Path Replanning\n"
@@ -75,10 +76,17 @@ int main(int argc, char** argv) {
             PathResult d_res = dijkstra.solve(g, start_node, goal_node);
             print_result("Dijkstra", d_res, start_node, goal_node);
             
-            auto heuristic = std::make_shared<EuclideanHeuristic>();
-            AStar astar(heuristic);
-            PathResult a_res = astar.solve(g, start_node, goal_node);
-            print_result("A* (Euclidean)", a_res, start_node, goal_node);
+            auto heuristic_e = std::make_shared<EuclideanHeuristic>();
+            AStar astar_e(heuristic_e);
+            PathResult a_res_e = astar_e.solve(g, start_node, goal_node);
+            print_result("A* (Euclidean)", a_res_e, start_node, goal_node);
+
+            // Using 4 landmarks for quick CLI demo
+            auto landmarks = ALTHeuristic::select_landmarks(g, 4);
+            auto heuristic_alt = std::make_shared<ALTHeuristic>(g, landmarks);
+            AStar astar_alt(heuristic_alt);
+            PathResult a_res_alt = astar_alt.solve(g, start_node, goal_node);
+            print_result("A* (ALT - 4 Landmarks)", a_res_alt, start_node, goal_node);
         }
     }
     
