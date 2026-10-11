@@ -28,12 +28,26 @@ cmake --build .
 
 ## Run Instructions
 
-### 1. View Help
+### 1. Interactive Demo Mode (Recommended for Evaluators)
+Launch the interactive terminal interface for demonstrations:
+```powershell
+.\planner.exe --interactive
+```
+Features available in interactive mode:
+- Load custom graph files or generate geometric graphs
+- Display graph stats (nodes, open/closed edges, version, landmark memory)
+- Toggle between Dijkstra, A* Euclidean, A* ALT, and IDA* ALT
+- Compute shortest paths with microsecond timing and node expansions
+- Dynamically close edges, reopen edges, and update weights
+- Replan routes and inspect staleness
+- Compare all four algorithms side-by-side in a formatted table
+
+### 2. View Help
 ```powershell
 .\planner.exe --help
 ```
 
-### 2. Static Shortest Path Search (Dijkstra vs A* Euclidean vs A* ALT vs IDA* ALT)
+### 3. Static Shortest Path Search (Dijkstra vs A* Euclidean vs A* ALT vs IDA* ALT)
 Solve between two nodes on a graph:
 ```powershell
 .\planner.exe --graph data/sample_graph.txt --start 0 --goal 2

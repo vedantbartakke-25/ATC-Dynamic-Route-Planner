@@ -10,10 +10,13 @@
 #include "dynamic/dynamic_engine.hpp"
 
 #include "benchmark/benchmark_runner.hpp"
+#include "cli/interactive_cli.hpp"
 
 void print_help() {
     std::cout << "Dynamic Shortest Path Replanning\n"
               << "Usage: planner [options]\n\n"
+              << "Interactive Mode:\n"
+              << "  --interactive     Launch professional terminal demo interface\n\n"
               << "Query Options:\n"
               << "  --graph <file>    Specify the graph input file\n"
               << "  --events <file>   Specify dynamic events file\n"
@@ -61,6 +64,7 @@ int main(int argc, char** argv) {
     NodeID goal_node = INVALID_NODE;
 
     bool run_benchmark = false;
+    bool run_interactive = false;
     BenchmarkConfig bench_cfg;
 
     for (int i = 1; i < argc; ++i) {
@@ -68,6 +72,8 @@ int main(int argc, char** argv) {
         if (arg == "--help") {
             print_help();
             return 0;
+        } else if (arg == "--interactive") {
+            run_interactive = true;
         } else if (arg == "--benchmark") {
             run_benchmark = true;
         } else if (arg == "--smoke-test") {
@@ -96,6 +102,12 @@ int main(int argc, char** argv) {
             print_help();
             return 1;
         }
+    }
+
+    if (run_interactive) {
+        InteractiveCLI cli;
+        cli.run();
+        return 0;
     }
 
     if (run_benchmark) {

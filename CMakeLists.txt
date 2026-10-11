@@ -38,9 +38,15 @@ add_library(benchmark_lib
 )
 target_link_libraries(benchmark_lib core generator algorithms dynamic)
 
+# CLI Interactive library
+add_library(cli_lib
+    src/cli/interactive_cli.cpp
+)
+target_link_libraries(cli_lib core generator algorithms dynamic)
+
 # Main executable
 add_executable(planner src/main.cpp)
-target_link_libraries(planner core generator algorithms dynamic benchmark_lib)
+target_link_libraries(planner core generator algorithms dynamic benchmark_lib cli_lib)
 
 # Tests executable
 add_executable(test_graph tests/test_graph.cpp)
