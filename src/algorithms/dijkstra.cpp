@@ -1,10 +1,8 @@
 #include "dijkstra.hpp"
+#include "core/high_res_timer.hpp"
 #include <queue>
 #include <vector>
-#include <chrono>
 #include <algorithm>
-
-using namespace std::chrono;
 
 struct SearchNode {
     NodeID id;
@@ -17,7 +15,8 @@ struct SearchNode {
 
 PathResult Dijkstra::solve(const Graph& graph, NodeID start, NodeID goal) {
     PathResult result;
-    auto start_time = steady_clock::now();
+    HighResTimer timer;
+    timer.start();
 
     size_t num_nodes = graph.get_num_nodes();
     if (start >= num_nodes || goal >= num_nodes) {
@@ -30,9 +29,11 @@ PathResult Dijkstra::solve(const Graph& graph, NodeID start, NodeID goal) {
 
     std::priority_queue<SearchNode, std::vector<SearchNode>, std::greater<SearchNode>> pq;
 
+    size_t peak_pq_size = 0;
     dist[start] = 0.0;
     pq.push({start, 0.0});
     result.nodes_generated++;
+    peak_pq_size = std::max(peak_pq_size, pq.size());
 
     while (!pq.empty()) {
         SearchNode current = pq.top();
@@ -57,12 +58,20 @@ PathResult Dijkstra::solve(const Graph& graph, NodeID start, NodeID goal) {
                 parent[next_id] = current.id;
                 pq.push({next_id, new_cost});
                 result.nodes_generated++;
+                peak_pq_size = std::max(peak_pq_size, pq.size());
             }
         }
     }
 
-    auto end_time = steady_clock::now();
-    result.search_time_ms = duration<double, std::milli>(end_time - start_time).count();
+    result.search_time_ms = timer.elapsed_ms();
+
+    // Compute estimated peak search memory:
+    // dist array + parent array + visited array + peak priority queue elements
+    size_t search_bytes = num_nodes * sizeof(EdgeWeight) +
+                          num_nodes * sizeof(NodeID) +
+                          num_nodes * sizeof(bool) +
+                          peak_pq_size * sizeof(SearchNode);
+    result.peak_memory_kb = static_cast<double>(search_bytes) / 1024.0;
 
     // Reconstruct path
     if (dist[goal] != INF_WEIGHT) {

@@ -31,6 +31,19 @@ public:
 
     double get_preprocessing_time_ms() const override { return preprocessing_time_ms; }
 
+    size_t get_landmark_count() const { return landmarks.size(); }
+    const std::vector<NodeID>& get_landmarks() const { return landmarks; }
+
+    // Memory occupied by the precomputed landmark distance table in KB
+    double get_memory_kb() const {
+        if (dist_table.empty()) return 0.0;
+        size_t bytes = dist_table.size() * sizeof(std::vector<EdgeWeight>);
+        for (const auto& row : dist_table) {
+            bytes += row.capacity() * sizeof(EdgeWeight);
+        }
+        return static_cast<double>(bytes) / 1024.0;
+    }
+
     // Helper to automatically pick landmarks (random/spread out)
     static std::vector<NodeID> select_landmarks(const Graph& graph, size_t count);
 };

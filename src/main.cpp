@@ -9,15 +9,25 @@
 #include "heuristics/alt_heuristic.hpp"
 #include "dynamic/dynamic_engine.hpp"
 
+#include "benchmark/benchmark_runner.hpp"
+
 void print_help() {
     std::cout << "Dynamic Shortest Path Replanning\n"
-              << "Usage: planner [options]\n"
-              << "Options:\n"
-              << "  --help          Show this help message\n"
-              << "  --graph <file>  Specify the graph input file\n"
-              << "  --events <file> Specify dynamic events file\n"
-              << "  --start <id>    Start node ID\n"
-              << "  --goal <id>     Goal node ID\n";
+              << "Usage: planner [options]\n\n"
+              << "Query Options:\n"
+              << "  --graph <file>    Specify the graph input file\n"
+              << "  --events <file>   Specify dynamic events file\n"
+              << "  --start <id>      Start node ID\n"
+              << "  --goal <id>       Goal node ID\n\n"
+              << "Benchmarking Options:\n"
+              << "  --benchmark       Run the benchmarking engine\n"
+              << "  --smoke-test      Run fast verification on small graphs\n"
+              << "  --experiment <id> Select experiment: 1, 2, 3, 4, 5, 6, 7, or all (default: all)\n"
+              << "  --export <dir>    Output directory for CSVs (default: results/benchmarks)\n"
+              << "  --repetitions <n> Number of repetitions (default: 5)\n"
+              << "  --seed <n>        Base random seed (default: 42)\n"
+              << "  --queries <n>     Number of query pairs per graph (default: 5)\n"
+              << "  --help            Show this help message\n";
 }
 
 void print_result(const std::string& name, const PathResult& res, NodeID start_node, NodeID goal_node) {
@@ -34,6 +44,7 @@ void print_result(const std::string& name, const PathResult& res, NodeID start_n
         }
         std::cout << "  Total Time (ms): " << res.search_time_ms << "\n"
                   << "  Heuristic Time (ms): " << res.heuristic_time_ms << "\n"
+                  << "  Peak Memory (KB): " << res.peak_memory_kb << "\n"
                   << "  Path Length: " << res.path.size() << " nodes\n";
     }
 }
@@ -49,11 +60,29 @@ int main(int argc, char** argv) {
     NodeID start_node = INVALID_NODE;
     NodeID goal_node = INVALID_NODE;
 
+    bool run_benchmark = false;
+    BenchmarkConfig bench_cfg;
+
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--help") {
             print_help();
             return 0;
+        } else if (arg == "--benchmark") {
+            run_benchmark = true;
+        } else if (arg == "--smoke-test") {
+            run_benchmark = true;
+            bench_cfg.smoke_test = true;
+        } else if (arg == "--experiment" && i + 1 < argc) {
+            bench_cfg.experiment_selection = argv[++i];
+        } else if (arg == "--export" && i + 1 < argc) {
+            bench_cfg.output_dir = argv[++i];
+        } else if (arg == "--repetitions" && i + 1 < argc) {
+            bench_cfg.repetitions = std::stoul(argv[++i]);
+        } else if (arg == "--seed" && i + 1 < argc) {
+            bench_cfg.random_seed = std::stoul(argv[++i]);
+        } else if (arg == "--queries" && i + 1 < argc) {
+            bench_cfg.query_count = std::stoul(argv[++i]);
         } else if (arg == "--graph" && i + 1 < argc) {
             graph_file = argv[++i];
         } else if (arg == "--events" && i + 1 < argc) {
@@ -67,6 +96,12 @@ int main(int argc, char** argv) {
             print_help();
             return 1;
         }
+    }
+
+    if (run_benchmark) {
+        BenchmarkRunner runner(bench_cfg);
+        runner.run_benchmarks();
+        return 0;
     }
 
     if (!graph_file.empty()) {

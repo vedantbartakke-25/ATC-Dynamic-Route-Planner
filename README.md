@@ -71,17 +71,35 @@ You can compile and run any of the test suites individually:
   g++ -std=c++17 src/core/graph.cpp src/generator/graph_generator.cpp src/algorithms/dijkstra.cpp src/algorithms/astar.cpp src/heuristics/alt_heuristic.cpp tests/test_alt.cpp -I src -o test_alt.exe; .\test_alt.exe
   ```
 
-- **IDA* Tests:**
+- **Benchmark Engine Tests:**
   ```powershell
-  g++ -std=c++17 src/core/graph.cpp src/generator/graph_generator.cpp src/algorithms/dijkstra.cpp src/algorithms/astar.cpp src/heuristics/alt_heuristic.cpp src/algorithms/ida_star.cpp tests/test_ida_star.cpp -I src -o test_ida_star.exe; .\test_ida_star.exe
+  g++ -std=c++17 src/core/graph.cpp src/generator/graph_generator.cpp src/algorithms/dijkstra.cpp src/algorithms/astar.cpp src/heuristics/alt_heuristic.cpp src/algorithms/ida_star.cpp src/dynamic/dynamic_engine.cpp src/benchmark/csv_exporter.cpp src/benchmark/experiment_runner.cpp src/benchmark/benchmark_runner.cpp tests/test_benchmark.cpp -I src -o test_benchmark.exe; .\test_benchmark.exe
   ```
 
-- **Dynamic Replanning Tests:**
-  ```powershell
-  g++ -std=c++17 src/core/graph.cpp src/generator/graph_generator.cpp src/algorithms/dijkstra.cpp src/algorithms/astar.cpp src/heuristics/alt_heuristic.cpp src/algorithms/ida_star.cpp src/dynamic/dynamic_engine.cpp tests/test_dynamic.cpp -I src -o test_dynamic.exe; .\test_dynamic.exe
-  ```
+---
 
-- **ALT Cache Invalidation & Correctness Patch Tests:**
-  ```powershell
-  g++ -std=c++17 src/core/graph.cpp src/generator/graph_generator.cpp src/algorithms/dijkstra.cpp src/algorithms/astar.cpp src/heuristics/alt_heuristic.cpp src/algorithms/ida_star.cpp src/dynamic/dynamic_engine.cpp tests/test_phase6_patch.cpp -I src -o run_cache.exe; .\run_cache.exe
-  ```
+## Benchmarking Engine (Phase 7)
+
+### 1. Run Benchmark Smoke-Test (Fast verification across all 7 experiments):
+```powershell
+.\planner.exe --benchmark --smoke-test --export results/benchmarks
+```
+
+### 2. Run Specific Experiments:
+```powershell
+# Run Experiment 1 (Graph Size Scaling)
+.\planner.exe --benchmark --experiment 1 --export results/benchmarks
+
+# Run Experiment 6 (Dynamic Replanning)
+.\planner.exe --benchmark --experiment 6 --export results/benchmarks
+
+# Run all experiments with custom repetitions and seed
+.\planner.exe --benchmark --experiment all --repetitions 5 --seed 123 --export results/benchmarks
+```
+
+### 3. Output CSV Reports:
+The benchmark suite generates three files in `results/benchmarks/`:
+- `raw_results.csv`: Every individual measured run with 28+ metrics.
+- `summary_results.csv`: Aggregated median, mean, and standard deviation per configuration.
+- `correctness_results.csv`: Cost verification checks against the Dijkstra oracle.
+

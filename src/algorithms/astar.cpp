@@ -1,8 +1,9 @@
 #include "astar.hpp"
+#include "core/high_res_timer.hpp"
 #include <queue>
 #include <vector>
-#include <chrono>
 #include <algorithm>
+#include <chrono>
 
 using namespace std::chrono;
 
@@ -18,7 +19,8 @@ struct AStarNode {
 
 PathResult AStar::solve(const Graph& graph, NodeID start, NodeID goal) {
     PathResult result;
-    auto start_time = steady_clock::now();
+    HighResTimer search_timer;
+    search_timer.start();
     double heuristic_duration_ms = 0.0;
 
     size_t num_nodes = graph.get_num_nodes();
@@ -39,8 +41,10 @@ PathResult AStar::solve(const Graph& graph, NodeID start, NodeID goal) {
     auto h_end = steady_clock::now();
     heuristic_duration_ms += duration<double, std::milli>(h_end - h_start).count();
 
+    size_t peak_pq_size = 0;
     pq.push({start, 0.0, start_h});
     result.nodes_generated++;
+    peak_pq_size = std::max(peak_pq_size, pq.size());
 
     while (!pq.empty()) {
         AStarNode current = pq.top();
@@ -73,14 +77,22 @@ PathResult AStar::solve(const Graph& graph, NodeID start, NodeID goal) {
                 EdgeWeight f_val = tentative_g + h_val;
                 pq.push({next_id, tentative_g, f_val});
                 result.nodes_generated++;
+                peak_pq_size = std::max(peak_pq_size, pq.size());
             }
         }
     }
 
-    auto end_time = steady_clock::now();
-    result.search_time_ms = duration<double, std::milli>(end_time - start_time).count();
+    result.search_time_ms = search_timer.elapsed_ms();
     result.heuristic_time_ms = heuristic_duration_ms;
     result.preprocessing_time_ms = heuristic->get_preprocessing_time_ms();
+
+    // Compute estimated peak search memory:
+    // g_dist + parent + visited + peak priority queue elements
+    size_t search_bytes = num_nodes * sizeof(EdgeWeight) +
+                          num_nodes * sizeof(NodeID) +
+                          num_nodes * sizeof(bool) +
+                          peak_pq_size * sizeof(AStarNode);
+    result.peak_memory_kb = static_cast<double>(search_bytes) / 1024.0;
 
     if (g_dist[goal] != INF_WEIGHT) {
         result.total_cost = g_dist[goal];

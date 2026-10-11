@@ -16,9 +16,6 @@ void Graph::add_edge(NodeID u, NodeID v, EdgeWeight weight) {
     if (u >= nodes.size() || v >= nodes.size()) {
         throw std::out_of_range("Node ID out of range");
     }
-    EdgeWeight min_bound = euclidean_distance(u, v);
-    if (weight < min_bound) weight = min_bound;
-    
     version++;
     adj_list[u].emplace_back(u, v, weight);
 }
@@ -57,12 +54,6 @@ bool Graph::set_edge_status(NodeID u, NodeID v, bool is_open) {
 
 EdgeWeight Graph::update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight) {
     if (u >= nodes.size() || v >= nodes.size()) throw std::out_of_range("Node ID out of range");
-    
-    // Ensure weight does not drop below physical Euclidean distance to preserve heuristic admissibility
-    EdgeWeight min_bound = euclidean_distance(u, v);
-    if (new_weight < min_bound) {
-        new_weight = min_bound;
-    }
 
     for (auto& edge : adj_list[u]) {
         if (edge.target == v) {

@@ -32,8 +32,11 @@ void test_dynamic_engine() {
     PathResult res = solver->solve(g, 0, 2);
     assert(double_equals(res.total_cost, 2.0)); // 0 -> 1 -> 2
     
-    // 1. Irrelevant edge change
-    GraphEvent ev1{10.0, EventType::UPDATE_WEIGHT, 0, 3, 5.0};
+    // 1. Irrelevant edge change (update edge not affecting optimal paths)
+    // Add an irrelevant disconnected node/edge or change an edge that isn't the alternative path
+    g.add_node(5, 5); // Node 4
+    g.add_undirected_edge(3, 4, 10.0);
+    GraphEvent ev1{10.0, EventType::UPDATE_WEIGHT, 3, 4, 15.0};
     ReplanningResult rep1 = engine.handle_event(ev1, res, 0, 2);
     // Not in path, weight increased -> no replan needed
     assert(!rep1.replanned);

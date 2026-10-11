@@ -41,11 +41,23 @@ public:
     void add_edge(NodeID u, NodeID v, EdgeWeight weight);
     void add_undirected_edge(NodeID u, NodeID v, EdgeWeight weight);
     bool remove_edge(NodeID u, NodeID v);
-    
+    bool has_edge(NodeID u, NodeID v) const {
+        if (u >= nodes.size()) return false;
+        for (const auto& e : adj_list[u]) {
+            if (e.target == v) return true;
+        }
+        return false;
+    }
+
     bool set_edge_status(NodeID u, NodeID v, bool is_open);
     EdgeWeight update_edge_weight(NodeID u, NodeID v, EdgeWeight new_weight);
 
     size_t get_num_nodes() const { return nodes.size(); }
+    size_t get_num_edges() const {
+        size_t count = 0;
+        for (const auto& edges : adj_list) count += edges.size();
+        return count;
+    }
     const Node& get_node(NodeID u) const { return nodes[u]; }
     const std::vector<Edge>& get_neighbors(NodeID u) const { return adj_list.at(u); }
     

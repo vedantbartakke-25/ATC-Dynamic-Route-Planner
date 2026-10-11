@@ -30,9 +30,17 @@ add_library(dynamic
 )
 target_link_libraries(dynamic core algorithms)
 
+# Benchmark library
+add_library(benchmark_lib
+    src/benchmark/csv_exporter.cpp
+    src/benchmark/experiment_runner.cpp
+    src/benchmark/benchmark_runner.cpp
+)
+target_link_libraries(benchmark_lib core generator algorithms dynamic)
+
 # Main executable
 add_executable(planner src/main.cpp)
-target_link_libraries(planner core generator algorithms dynamic)
+target_link_libraries(planner core generator algorithms dynamic benchmark_lib)
 
 # Tests executable
 add_executable(test_graph tests/test_graph.cpp)
@@ -61,3 +69,7 @@ target_link_libraries(test_dynamic core generator algorithms dynamic)
 # Phase 6 Patch Tests
 add_executable(test_phase6_patch tests/test_phase6_patch.cpp)
 target_link_libraries(test_phase6_patch core generator algorithms dynamic)
+
+# Benchmark Tests
+add_executable(test_benchmark tests/test_benchmark.cpp)
+target_link_libraries(test_benchmark core generator algorithms dynamic benchmark_lib)

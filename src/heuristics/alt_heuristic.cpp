@@ -14,8 +14,11 @@ ALTHeuristic::ALTHeuristic(const Graph& graph, const std::vector<NodeID>& chosen
     preprocess(graph);
 }
 
+#include "core/high_res_timer.hpp"
+
 void ALTHeuristic::preprocess(const Graph& graph) {
-    auto start_time = steady_clock::now();
+    HighResTimer prep_timer;
+    prep_timer.start();
 
     size_t num_nodes = graph.get_num_nodes();
     dist_table.assign(landmarks.size(), std::vector<EdgeWeight>(num_nodes, INF_WEIGHT));
@@ -24,8 +27,7 @@ void ALTHeuristic::preprocess(const Graph& graph) {
         compute_landmark_distances(graph, landmarks[i], dist_table[i]);
     }
 
-    auto end_time = steady_clock::now();
-    preprocessing_time_ms = duration<double, std::milli>(end_time - start_time).count();
+    preprocessing_time_ms = prep_timer.elapsed_ms();
     
     // Only update cache after successful preprocess
     cached_graph_id = graph.get_id();
